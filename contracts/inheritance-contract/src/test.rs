@@ -78,7 +78,7 @@ fn plan_params(
     description: &str,
     total_amount: u64,
     distribution_method: DistributionMethod,
-    beneficiaries_data: &Vec<(String, String, u32, Bytes, u32, u32)>,
+    beneficiaries_data: &Vec<(String, String, u32, Bytes, u32, u32, Option<Address>)>,
 ) -> CreateInheritancePlanParams {
     CreateInheritancePlanParams {
         owner: owner.clone(),
@@ -94,7 +94,9 @@ fn plan_params(
     }
 }
 
-fn default_beneficiaries(env: &Env) -> Vec<(String, String, u32, Bytes, u32, u32)> {
+fn default_beneficiaries(
+    env: &Env,
+) -> Vec<(String, String, u32, Bytes, u32, u32, Option<Address>)> {
     vec![
         env,
         (
@@ -104,6 +106,7 @@ fn default_beneficiaries(env: &Env) -> Vec<(String, String, u32, Bytes, u32, u32
             create_test_bytes(env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ]
 }
@@ -127,7 +130,7 @@ fn one_beneficiary(
     name: &str,
     email: &str,
     claim_code: u32,
-) -> Vec<(String, String, u32, Bytes, u32, u32)> {
+) -> Vec<(String, String, u32, Bytes, u32, u32, Option<Address>)> {
     vec![
         env,
         (
@@ -137,6 +140,7 @@ fn one_beneficiary(
             create_test_bytes(env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ]
 }
@@ -249,6 +253,7 @@ fn test_validate_beneficiaries_basis_points() {
             create_test_bytes(&env, "123456789"),
             5000u32, // 50%
             1u32,    // priority
+            None,
         ),
         (
             String::from_str(&env, "Jane"),
@@ -257,6 +262,7 @@ fn test_validate_beneficiaries_basis_points() {
             create_test_bytes(&env, "987654321"),
             5000u32, // 50%
             2u32,    // priority
+            None,
         ),
     ];
 
@@ -282,6 +288,7 @@ fn test_validate_beneficiaries_basis_points() {
             create_test_bytes(&env, "123456789"),
             6000u32,
             1u32,
+            None,
         ),
         (
             String::from_str(&env, "Jane"),
@@ -290,6 +297,7 @@ fn test_validate_beneficiaries_basis_points() {
             create_test_bytes(&env, "987654321"),
             5000u32,
             2u32,
+            None,
         ),
     ];
 
@@ -323,6 +331,7 @@ fn test_create_beneficiary_success() {
             bank_account,
             allocation,
             1u32, // priority
+            None, // contingency_address
         )
     });
 
@@ -348,6 +357,7 @@ fn test_create_beneficiary_invalid_data() {
             create_test_bytes(&env, "1234567890123456"),
             5000u32,
             1u32,
+            None, // contingency_address
         )
     });
     assert!(result.is_err());
@@ -368,6 +378,7 @@ fn test_create_beneficiary_invalid_data() {
             create_test_bytes(&env, "1234567890123456"),
             5000u32,
             2u32,
+            None, // contingency_address
         )
     });
     assert!(result.is_err());
@@ -388,6 +399,7 @@ fn test_create_beneficiary_invalid_data() {
             create_test_bytes(&env, "1234567890123456"),
             0u32, // zero allocation
             1u32, // priority
+            None, // contingency_address
         )
     });
     assert!(result.is_err());
@@ -408,6 +420,7 @@ fn test_add_beneficiary_success() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32, // 100%
             1u32,     // priority
+            None,
         ),
     ];
 
@@ -455,6 +468,7 @@ fn test_add_beneficiary_allocation_exceeds_limit() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -480,6 +494,7 @@ fn test_add_beneficiary_allocation_exceeds_limit() {
             bank_account: create_test_bytes(&env, "3333333333333333"),
             allocation_bp: 2000,
             priority: 1,
+            contingency_address: None,
         },
     );
 
@@ -500,6 +515,7 @@ fn test_remove_beneficiary_success() {
             create_test_bytes(&env, "1111111111111111"),
             5000u32,
             1u32,
+            None,
         ),
         (
             String::from_str(&env, "Bob"),
@@ -508,6 +524,7 @@ fn test_remove_beneficiary_success() {
             create_test_bytes(&env, "2222222222222222"),
             5000u32,
             2u32,
+            None,
         ),
     ];
 
@@ -537,6 +554,7 @@ fn test_remove_beneficiary_success() {
             bank_account: create_test_bytes(&env, "3333333333333333"),
             allocation_bp: 2000,
             priority: 1,
+            contingency_address: None,
         },
     );
     assert!(add_result.is_ok());
@@ -556,6 +574,7 @@ fn test_remove_beneficiary_invalid_index() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -590,6 +609,7 @@ fn test_remove_beneficiary_unauthorized() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -623,6 +643,7 @@ fn test_beneficiary_allocation_tracking() {
             create_test_bytes(&env, "1111111111111111"),
             4000u32, // 40%
             1u32,    // priority
+            None,
         ),
         (
             String::from_str(&env, "Bob"),
@@ -631,6 +652,7 @@ fn test_beneficiary_allocation_tracking() {
             create_test_bytes(&env, "2222222222222222"),
             3000u32, // 30%
             2u32,    // priority
+            None,
         ),
         (
             String::from_str(&env, "Charlie"),
@@ -639,6 +661,7 @@ fn test_beneficiary_allocation_tracking() {
             create_test_bytes(&env, "3333333333333333"),
             3000u32, // 30%
             3u32,    // priority
+            None,
         ),
     ];
 
@@ -667,6 +690,7 @@ fn test_beneficiary_allocation_tracking() {
             bank_account: create_test_bytes(&env, "3333333333333333"),
             allocation_bp: 2000,
             priority: 1,
+            contingency_address: None,
         },
     );
     assert!(result.is_ok());
@@ -682,6 +706,7 @@ fn test_beneficiary_allocation_tracking() {
             bank_account: create_test_bytes(&env, "3333333333333333"),
             allocation_bp: 2000,
             priority: 1,
+            contingency_address: None,
         },
     );
     assert!(result2.is_err());
@@ -701,6 +726,7 @@ fn test_claim_success() {
             create_test_bytes(&env, "1111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -748,6 +774,7 @@ fn test_double_claim_fails() {
             create_test_bytes(&env, "1111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -793,6 +820,7 @@ fn test_claim_with_wrong_code_fails() {
             create_test_bytes(&env, "1111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -829,6 +857,7 @@ fn test_deactivate_plan_success() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -863,6 +892,7 @@ fn test_deactivate_plan_unauthorized() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -910,6 +940,7 @@ fn test_deactivate_plan_already_deactivated() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -948,6 +979,7 @@ fn test_claim_deactivated_plan_fails() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -988,6 +1020,7 @@ fn test_deactivate_plan_with_multiple_beneficiaries() {
             create_test_bytes(&env, "1111111111111111"),
             5000u32,
             1u32,
+            None,
         ),
         (
             String::from_str(&env, "Bob"),
@@ -996,6 +1029,7 @@ fn test_deactivate_plan_with_multiple_beneficiaries() {
             create_test_bytes(&env, "2222222222222222"),
             5000u32,
             2u32,
+            None,
         ),
     ];
 
@@ -1029,6 +1063,7 @@ fn test_get_plan_details() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -1534,6 +1569,7 @@ fn test_plan_data_survives_across_versions() {
             create_test_bytes(&env, "1111111111111111"),
             5000u32,
             1u32,
+            None,
         ),
         (
             String::from_str(&env, "Bob"),
@@ -1542,6 +1578,7 @@ fn test_plan_data_survives_across_versions() {
             create_test_bytes(&env, "2222222222222222"),
             5000u32,
             2u32,
+            None,
         ),
     ];
 
@@ -1612,6 +1649,7 @@ fn test_get_user_deactivated_plans() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -1673,6 +1711,7 @@ fn test_admin_retrieval() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -1722,6 +1761,7 @@ fn test_get_claimed_plan() {
             create_test_bytes(&env, "1111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -1772,6 +1812,7 @@ fn test_get_user_claimed_plans() {
             create_test_bytes(&env, "1111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -1833,6 +1874,7 @@ fn test_get_all_claimed_plans() {
             create_test_bytes(&env, "1111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
 
@@ -5407,6 +5449,7 @@ fn plan_with_partial_alloc(
             create_test_bytes(env, "1111111111111111"),
             5000u32,
             1u32,
+            None,
         ),
         (
             String::from_str(env, "Bob"),
@@ -5415,6 +5458,7 @@ fn plan_with_partial_alloc(
             create_test_bytes(env, "2222222222222222"),
             5000u32,
             2u32,
+            None,
         ),
     ];
     client.create_inheritance_plan(&plan_params(
@@ -5445,6 +5489,7 @@ fn test_batch_add_beneficiaries_success() {
             bank_account: create_test_bytes(&env, "3333333333333333"),
             allocation_bp: 6000u32,
             priority: 1u32,
+            contingency_address: None,
         },
         BeneficiaryInput {
             name: String::from_str(&env, "Dave"),
@@ -5453,6 +5498,7 @@ fn test_batch_add_beneficiaries_success() {
             bank_account: create_test_bytes(&env, "4444444444444444"),
             allocation_bp: 4000u32,
             priority: 2u32,
+            contingency_address: None,
         },
     ];
     let (success, fail) = client.batch_add_beneficiaries(&owner, &plan_id, &inputs);
@@ -5477,6 +5523,7 @@ fn test_batch_add_beneficiaries_partial_fail_over_allocation() {
             bank_account: create_test_bytes(&env, "5555555555555555"),
             allocation_bp: 1000u32,
             priority: 1u32,
+            contingency_address: None,
         },
     ];
     let (success, fail) = client.batch_add_beneficiaries(&owner, &plan_id, &inputs);
@@ -5498,6 +5545,7 @@ fn test_batch_add_beneficiaries_limit_exceeded() {
             bank_account: create_test_bytes(&env, "1234"),
             allocation_bp: 100u32,
             priority: i,
+            contingency_address: None,
         });
     }
     let result = client.try_batch_add_beneficiaries(&owner, &plan_id, &inputs);
@@ -5519,6 +5567,7 @@ fn test_batch_add_beneficiaries_unauthorized() {
             bank_account: create_test_bytes(&env, "1234"),
             allocation_bp: 1000u32,
             priority: 1u32,
+            contingency_address: None,
         },
     ];
     let result = client.try_batch_add_beneficiaries(&stranger, &plan_id, &inputs);
@@ -5756,6 +5805,7 @@ fn test_batch_claim_success() {
             create_test_bytes(&env, "1111111111111111"),
             5000u32,
             1u32,
+            None,
         ),
         (
             String::from_str(&env, "Bob"),
@@ -5764,6 +5814,7 @@ fn test_batch_claim_success() {
             create_test_bytes(&env, "2222222222222222"),
             5000u32,
             2u32,
+            None,
         ),
     ];
     let plan_id = client.create_inheritance_plan(&plan_params(
@@ -5813,6 +5864,7 @@ fn test_batch_claim_partial_fail_wrong_code() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
     let plan_id = client.create_inheritance_plan(&plan_params(
@@ -5854,6 +5906,7 @@ fn test_batch_claim_no_kyc_counted_as_fail() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
     let plan_id = client.create_inheritance_plan(&plan_params(
@@ -5893,6 +5946,7 @@ fn test_batch_claim_double_claim_counted_as_fail() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
     let plan_id = client.create_inheritance_plan(&plan_params(
@@ -5940,6 +5994,7 @@ fn test_batch_claim_limit_exceeded() {
             create_test_bytes(&env, "1111111111111111"),
             10000u32,
             1u32,
+            None,
         ),
     ];
     let plan_id = client.create_inheritance_plan(&plan_params(
@@ -5965,6 +6020,437 @@ fn test_batch_claim_limit_exceeded() {
 }
 
 #[test]
+fn test_batch_claim_inheritance_plan_success() {
+    let env = Env::default();
+    let (client, token, _admin, owner) = setup_with_token_and_admin(&env);
+
+    let bens = vec![
+        &env,
+        (
+            String::from_str(&env, "Heir 1"),
+            String::from_str(&env, "heir1@example.com"),
+            111111u32,
+            create_test_bytes(&env, "BANK123"),
+            5000u32,
+            1u32,
+            None,
+        ),
+        (
+            String::from_str(&env, "Heir 2"),
+            String::from_str(&env, "heir2@example.com"),
+            222222u32,
+            create_test_bytes(&env, "BANK456"),
+            5000u32,
+            2u32,
+            None,
+        ),
+    ];
+
+    let plan_id = client.create_inheritance_plan(&plan_params(
+        &env,
+        &owner,
+        &token,
+        "Family Vault",
+        "Inheritance Plan",
+        100_000u64,
+        DistributionMethod::LumpSum,
+        &bens,
+    ));
+
+    let indices = vec![&env, 0u32, 1u32];
+    let codes = vec![&env, 111111u32, 222222u32];
+
+    let result = client.try_batch_claim_inheritance_plan(&plan_id, &indices, &codes);
+    assert!(result.is_ok());
+
+    let plan = client.get_plan_details(&plan_id).unwrap();
+    assert!(plan.beneficiaries.get(0).unwrap().is_claimed);
+    assert!(plan.beneficiaries.get(1).unwrap().is_claimed);
+    assert_eq!(plan.total_amount, 0);
+}
+
+#[test]
+fn test_batch_claim_inheritance_plan_atomic_rollback_on_wrong_code() {
+    let env = Env::default();
+    let (client, token, _admin, owner) = setup_with_token_and_admin(&env);
+
+    let bens = vec![
+        &env,
+        (
+            String::from_str(&env, "Heir 1"),
+            String::from_str(&env, "heir1@example.com"),
+            111111u32,
+            create_test_bytes(&env, "BANK123"),
+            5000u32,
+            1u32,
+            None,
+        ),
+        (
+            String::from_str(&env, "Heir 2"),
+            String::from_str(&env, "heir2@example.com"),
+            222222u32,
+            create_test_bytes(&env, "BANK456"),
+            5000u32,
+            2u32,
+            None,
+        ),
+    ];
+
+    let plan_id = client.create_inheritance_plan(&plan_params(
+        &env,
+        &owner,
+        &token,
+        "Family Vault",
+        "Inheritance Plan",
+        100_000u64,
+        DistributionMethod::LumpSum,
+        &bens,
+    ));
+
+    // Correct code for Heir 1, WRONG code for Heir 2
+    let indices = vec![&env, 0u32, 1u32];
+    let codes = vec![&env, 111111u32, 999999u32];
+
+    let result = client.try_batch_claim_inheritance_plan(&plan_id, &indices, &codes);
+    assert!(result.is_err());
+
+    // Verify atomic rollback: neither heir is marked claimed
+    let plan = client.get_plan_details(&plan_id).unwrap();
+    assert!(!plan.beneficiaries.get(0).unwrap().is_claimed);
+    assert!(!plan.beneficiaries.get(1).unwrap().is_claimed);
+    assert_eq!(plan.total_amount, 98000u64);
+}
+
+#[test]
+fn test_batch_claim_inheritance_plan_duplicate_index_fails() {
+    let env = Env::default();
+    let (client, token, _admin, owner) = setup_with_token_and_admin(&env);
+
+    let bens = vec![
+        &env,
+        (
+            String::from_str(&env, "Heir 1"),
+            String::from_str(&env, "heir1@example.com"),
+            111111u32,
+            create_test_bytes(&env, "BANK123"),
+            10000u32,
+            1u32,
+            None,
+        ),
+    ];
+
+    let plan_id = client.create_inheritance_plan(&plan_params(
+        &env,
+        &owner,
+        &token,
+        "Family Vault",
+        "Inheritance Plan",
+        100_000u64,
+        DistributionMethod::LumpSum,
+        &bens,
+    ));
+
+    let indices = vec![&env, 0u32, 0u32];
+    let codes = vec![&env, 111111u32, 111111u32];
+
+    let result = client.try_batch_claim_inheritance_plan(&plan_id, &indices, &codes);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_batch_claim_inheritance_plan_length_mismatch_fails() {
+    let env = Env::default();
+    let (client, token, _admin, owner) = setup_with_token_and_admin(&env);
+
+    let bens = vec![
+        &env,
+        (
+            String::from_str(&env, "Heir 1"),
+            String::from_str(&env, "heir1@example.com"),
+            111111u32,
+            create_test_bytes(&env, "BANK123"),
+            10000u32,
+            1u32,
+            None,
+        ),
+    ];
+
+    let plan_id = client.create_inheritance_plan(&plan_params(
+        &env,
+        &owner,
+        &token,
+        "Family Vault",
+        "Inheritance Plan",
+        100_000u64,
+        DistributionMethod::LumpSum,
+        &bens,
+    ));
+
+    let indices = vec![&env, 0u32];
+    let codes = vec![&env, 111111u32, 222222u32];
+
+    let result = client.try_batch_claim_inheritance_plan(&plan_id, &indices, &codes);
+    assert!(result.is_err());
+}
+
+// Two equal fiat beneficiaries, with a net funded balance of 98,000.
+fn batch_claim_fixture(env: &Env) -> (InheritanceContractClient<'_>, Address, Address, u64) {
+    let (client, token, _admin, owner) = setup_with_token_and_admin(env);
+    let mut bens = Vec::new(env);
+    for i in 0..2u32 {
+        bens.push_back((
+            String::from_str(env, if i == 0 { "First" } else { "Second" }),
+            String::from_str(
+                env,
+                if i == 0 {
+                    "first@example.com"
+                } else {
+                    "second@example.com"
+                },
+            ),
+            111111 * (i + 1),
+            create_test_bytes(env, "BANK123"),
+            5000u32,
+            i + 1,
+            None,
+        ));
+    }
+    let id = client.create_inheritance_plan(&plan_params(
+        env,
+        &owner,
+        &token,
+        "Batch",
+        "Regression",
+        100_000,
+        DistributionMethod::LumpSum,
+        &bens,
+    ));
+    (client, token, owner, id)
+}
+
+#[test]
+fn test_batch_claim_inheritance_plan_input_bounds() {
+    let env = Env::default();
+    let (client, _, _, id) = batch_claim_fixture(&env);
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(&id, &Vec::new(&env), &Vec::new(&env)),
+        Err(Ok(InheritanceError::MissingRequiredField))
+    );
+    let mut indices = Vec::new(&env);
+    let mut codes = Vec::new(&env);
+    for i in 0..11 {
+        indices.push_back(i);
+        codes.push_back(111111);
+    }
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(&id, &indices, &codes),
+        Err(Ok(InheritanceError::TooManyBeneficiaries))
+    );
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(&id, &vec![&env, 2], &vec![&env, 111111]),
+        Err(Ok(InheritanceError::InvalidBeneficiaryIndex))
+    );
+}
+
+#[test]
+fn test_batch_claim_inheritance_plan_waterfall_order_and_events() {
+    let env = Env::default();
+    let (client, token, owner, id) = batch_claim_fixture(&env);
+    client.enable_waterfall_distribution(&owner, &id);
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(
+            &id,
+            &vec![&env, 1, 0],
+            &vec![&env, 222222, 111111]
+        ),
+        Err(Ok(InheritanceError::ClaimNotAllowedYet))
+    );
+    let vault = client.get_plan_vault_address(&id).unwrap();
+    let balance = token::Client::new(&env, &token).balance(&client.address);
+    client.batch_claim_inheritance_plan(&id, &vec![&env, 0, 1], &vec![&env, 111111, 222222]);
+    let plan = client.get_plan_details(&id).unwrap();
+    assert_eq!(plan.total_amount, 0);
+    assert!(plan.beneficiaries.iter().all(|b| b.is_claimed));
+    assert_eq!(token::Client::new(&env, &token).balance(&vault), 0);
+    assert_eq!(
+        token::Client::new(&env, &token).balance(&client.address),
+        balance + 98_000
+    );
+    let events = env.events().all();
+    for index in 0..2u32 {
+        assert!(events
+            .iter()
+            .any(|(address, topics, data)| address == client.address
+                && topics == (symbol_short!("F_PAYOUT"), id, index).into_val(&env)
+                && <(u64, u32, u64, Symbol)>::from_val(&env, &data)
+                    == (id, index, 49_000u64, symbol_short!("BANK"))));
+    }
+    assert!(events
+        .iter()
+        .any(|(address, topics, data)| address == client.address
+            && topics == (symbol_short!("BATCH"), symbol_short!("CLAIM")).into_val(&env)
+            && BatchClaimEvent::from_val(&env, &data)
+                == BatchClaimEvent {
+                    plan_id: id,
+                    success_count: 2,
+                    fail_count: 0
+                }));
+}
+
+#[test]
+fn test_batch_claim_inheritance_plan_partial_exit_does_not_unlock_waterfall() {
+    let env = Env::default();
+    let (client, _, owner, id) = batch_claim_fixture(&env);
+    client.enable_waterfall_distribution(&owner, &id);
+    env.as_contract(&client.address, || {
+        env.storage()
+            .persistent()
+            .set(&DataKey::Ves(id, 0), &60_000u64);
+    });
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(
+            &id,
+            &vec![&env, 0, 1],
+            &vec![&env, 111111, 222222]
+        ),
+        Err(Ok(InheritanceError::ClaimNotAllowedYet))
+    );
+    assert_eq!(client.get_plan_details(&id).unwrap().total_amount, 98_000);
+}
+
+#[test]
+fn test_batch_claim_inheritance_plan_rejects_genetic_proof_bypass() {
+    let env = Env::default();
+    let (client, _, owner, id) = batch_claim_fixture(&env);
+    client.set_genetic_kin_requirement(&owner, &id, &1, &true);
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(
+            &id,
+            &vec![&env, 0, 1],
+            &vec![&env, 111111, 222222]
+        ),
+        Err(Ok(InheritanceError::ZkProofRequired))
+    );
+    assert_eq!(client.get_plan_details(&id).unwrap().total_amount, 98_000);
+}
+
+#[test]
+fn test_batch_claim_inheritance_plan_trigger_preserves_loan_freeze() {
+    let env = Env::default();
+    let (client, _, owner, id) = batch_claim_fixture(&env);
+    client.add_time_trigger(&owner, &id, &1);
+    env.ledger().with_mut(|l| l.timestamp = 2);
+    client.batch_claim_inheritance_plan(&id, &vec![&env, 0], &vec![&env, 111111]);
+    assert!(client.get_inheritance_trigger(&id).is_some());
+    assert!(!client.get_plan_details(&id).unwrap().is_lendable);
+}
+
+#[test]
+fn test_batch_claim_inheritance_plan_trigger_cannot_bypass_liquidity() {
+    let env = Env::default();
+    let (client, _, owner, id) = batch_claim_fixture(&env);
+    env.as_contract(&client.address, || {
+        let mut plan = InheritanceContract::get_plan(&env, id).unwrap();
+        plan.total_loaned = 1;
+        InheritanceContract::store_plan(&env, id, &plan);
+    });
+    client.add_time_trigger(&owner, &id, &1);
+    env.ledger().with_mut(|l| l.timestamp = 2);
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(
+            &id,
+            &vec![&env, 0, 1],
+            &vec![&env, 111111, 222222]
+        ),
+        Err(Ok(InheritanceError::InsufficientLiquidity))
+    );
+    assert!(client.get_inheritance_trigger(&id).is_none());
+    assert!(client.get_plan_details(&id).unwrap().is_lendable);
+    client.auto_trigger_check(&id);
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(
+            &id,
+            &vec![&env, 0, 1],
+            &vec![&env, 111111, 222222]
+        ),
+        Err(Ok(InheritanceError::InsufficientLiquidity))
+    );
+}
+
+#[test]
+fn test_batch_claim_inheritance_plan_execution_failure_rolls_back_transfers() {
+    let env = Env::default();
+    let (client, token, owner, id) = batch_claim_fixture(&env);
+    let vault = client.get_plan_vault_address(&id).unwrap();
+    // Leave enough for the first transfer (49,000), but not the second.
+    MockTokenClient::new(&env, &token).burn(&vault, &30_000);
+    client.add_time_trigger(&owner, &id, &1);
+    env.ledger().with_mut(|l| l.timestamp = 2);
+    let before = client.get_plan_details(&id).unwrap();
+    let balance = token::Client::new(&env, &token).balance(&client.address);
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(
+            &id,
+            &vec![&env, 0, 1],
+            &vec![&env, 111111, 222222]
+        ),
+        Err(Ok(InheritanceError::FeeTransferFailed))
+    );
+    assert_eq!(client.get_plan_details(&id).unwrap(), before);
+    assert_eq!(token::Client::new(&env, &token).balance(&vault), 68_000);
+    assert_eq!(
+        token::Client::new(&env, &token).balance(&client.address),
+        balance
+    );
+    assert!(client.get_inheritance_trigger(&id).is_none());
+    env.as_contract(&client.address, || {
+        let mut data = Bytes::new(&env);
+        data.extend_from_slice(&id.to_be_bytes());
+        data.extend_from_slice(&before.beneficiaries.get(0).unwrap().hashed_email.to_array());
+        assert!(!env
+            .storage()
+            .persistent()
+            .has(&DataKey::C(env.crypto().sha256(&data).into())));
+    });
+    // A retry also proves that the reentrancy guard was rolled back.
+    MockTokenClient::new(&env, &token).mint(&vault, &30_000);
+    client.batch_claim_inheritance_plan(&id, &vec![&env, 0, 1], &vec![&env, 111111, 222222]);
+}
+
+#[test]
+fn test_batch_claim_inheritance_plan_emergency_limit_covers_whole_batch() {
+    let env = Env::default();
+    let (client, _, owner, id) = batch_claim_fixture(&env);
+    env.as_contract(&client.address, || {
+        // Each settlement fits the 9,800 limit; together they exceed it.
+        for index in 0..2u32 {
+            env.storage()
+                .persistent()
+                .set(&DataKey::Ves(id, index), &6_000u64);
+        }
+        env.storage().persistent().set(
+            &DataKey::Eac(id),
+            &EmergencyAccessRecord {
+                plan_id: id,
+                trusted_contact: owner.clone(),
+                activated_at: env.ledger().timestamp(),
+            },
+        );
+    });
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(
+            &id,
+            &vec![&env, 0, 1],
+            &vec![&env, 111111, 222222]
+        ),
+        Err(Ok(InheritanceError::EmergencyCooldownActive))
+    );
+    assert_eq!(client.get_plan_details(&id).unwrap().total_amount, 98_000);
+    client.batch_claim_inheritance_plan(&id, &vec![&env, 0], &vec![&env, 111111]);
+    assert_eq!(client.get_plan_details(&id).unwrap().total_amount, 92_000);
+}
+
+#[test]
 fn test_waterfall_payout_logic() {
     let env = Env::default();
     let (client, token, admin, owner) = setup_with_token_and_admin(&env);
@@ -5978,6 +6464,7 @@ fn test_waterfall_payout_logic() {
             create_test_bytes(&env, "1111111111111111"),
             6000u32, // 60%
             1u32,    // priority 1
+            None,
         ),
         (
             String::from_str(&env, "Priority 2"),
@@ -5986,6 +6473,7 @@ fn test_waterfall_payout_logic() {
             create_test_bytes(&env, "2222222222222222"),
             4000u32, // 40%
             2u32,    // priority 2
+            None,
         ),
     ];
 
@@ -6068,6 +6556,7 @@ fn test_priority_validation() {
             create_test_bytes(&env, "1111"),
             5000u32,
             1u32,
+            None,
         ),
         (
             String::from_str(&env, "B"),
@@ -6076,6 +6565,7 @@ fn test_priority_validation() {
             create_test_bytes(&env, "2222"),
             5000u32,
             1u32, // Duplicate priority!
+            None,
         ),
     ];
 
@@ -6241,6 +6731,7 @@ fn test_get_unacknowledged_beneficiaries() {
             create_test_bytes(&env, "1111111111111111"),
             5000u32,
             1u32,
+            None,
         ),
         (
             String::from_str(&env, "Bob"),
@@ -6249,6 +6740,7 @@ fn test_get_unacknowledged_beneficiaries() {
             create_test_bytes(&env, "2222222222222222"),
             5000u32,
             2u32,
+            None,
         ),
     ];
 
@@ -6740,24 +7232,28 @@ fn test_link_accepts_peer_on_matching_version() {
 }
 
 #[test]
-#[should_panic(expected = "incompatible contract version")]
 fn test_link_rejects_peer_on_version_mismatch() {
     let env = Env::default();
     let (client, admin) = setup_versioned_contract(&env);
 
     let stale = env.register_contract(None, StaleVersionPeer);
-    client.set_lending_contract(&admin, &stale);
+    assert_eq!(
+        client.try_set_lending_contract(&admin, &stale),
+        Err(Ok(Error::IncompatibleVersion))
+    );
 }
 
 #[test]
-#[should_panic(expected = "contract version unavailable")]
 fn test_link_rejects_peer_that_cannot_report_a_version() {
     let env = Env::default();
     let (client, admin) = setup_versioned_contract(&env);
 
     // Not a contract at all — it can never answer `get_version`.
     let not_a_contract = create_test_address(&env, 7);
-    client.set_lending_contract(&admin, &not_a_contract);
+    assert_eq!(
+        client.try_set_lending_contract(&admin, &not_a_contract),
+        Err(Ok(Error::IncompatibleVersion))
+    );
 }
 
 #[test]
@@ -7908,4 +8404,167 @@ fn test_raise_dispute_and_resolve_dispute() {
 
     let res = client.try_resolve_dispute(&plan_id, &true);
     assert!(res.is_ok());
+}
+
+#[test]
+fn test_custom_error_enum_discriminants() {
+    assert_eq!(Error::PlanNotFound as u32, 10);
+    assert_eq!(Error::PlanNotExpired as u32, 24);
+    assert_eq!(Error::Unauthorized as u32, 9);
+    assert_eq!(Error::InvalidAllocation as u32, 13);
+    assert_eq!(Error::DisputeActive as u32, 25);
+    let error: InheritanceError = Error::PlanNotFound;
+    assert_eq!(error, InheritanceError::PlanNotFound);
+}
+
+#[test]
+fn test_error_diagnostics_from_claim_entry_point() {
+    let env = Env::default();
+    let (client, _, owner, id) = batch_claim_fixture(&env);
+    let indices = vec![&env, 0u32];
+    let codes = vec![&env, 111111u32];
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(&999, &indices, &codes),
+        Err(Ok(Error::PlanNotFound))
+    );
+    env.as_contract(&client.address, || {
+        let mut plan = InheritanceContract::get_plan(&env, id).unwrap();
+        plan.distribution_method = DistributionMethod::Monthly;
+        InheritanceContract::store_plan(&env, id, &plan);
+    });
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(&id, &indices, &codes),
+        Err(Ok(Error::PlanNotExpired))
+    );
+    let raw = env.try_invoke_contract::<(), soroban_sdk::Error>(
+        &client.address,
+        &Symbol::new(&env, "batch_claim_inheritance_plan"),
+        vec![
+            &env,
+            id.into_val(&env),
+            indices.clone().into_val(&env),
+            codes.clone().into_val(&env),
+        ],
+    );
+    assert_eq!(raw, Err(Ok(soroban_sdk::Error::from_contract_error(24))));
+    client.raise_dispute(&id, &owner, &BytesN::from_array(&env, &[1; 32]));
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(&id, &indices, &codes),
+        Err(Ok(Error::DisputeActive))
+    );
+    client.resolve_dispute(&id, &true);
+    // Resolving a dispute does not bypass the independent time gate.
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(&id, &indices, &codes),
+        Err(Ok(Error::PlanNotExpired))
+    );
+    assert_eq!(client.get_plan_details(&id).unwrap().total_amount, 98_000);
+}
+
+#[test]
+fn test_error_diagnostics_pause_reentrancy_and_authorization() {
+    let env = Env::default();
+    let (client, _, owner, id) = batch_claim_fixture(&env);
+    let admin = env.as_contract(&client.address, || {
+        InheritanceContract::get_admin(&env).unwrap()
+    });
+    let indices = vec![&env, 0u32];
+    let codes = vec![&env, 111111u32];
+    client.pause(&admin);
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(&id, &indices, &codes),
+        Err(Ok(Error::ContractPaused))
+    );
+    client.unpause(&admin);
+    env.as_contract(&client.address, || {
+        env.storage()
+            .temporary()
+            .set(&access_control::SecurityKey::ReentrancyLock, &true);
+    });
+    assert_eq!(
+        client.try_batch_claim_inheritance_plan(&id, &indices, &codes),
+        Err(Ok(Error::ReentrantCall))
+    );
+    env.as_contract(&client.address, || {
+        env.storage()
+            .temporary()
+            .remove(&access_control::SecurityKey::ReentrancyLock);
+        env.storage()
+            .instance()
+            .set(&access_control::PauseKey::ActiveOps, &1i128);
+    });
+    assert_eq!(client.try_pause(&admin), Err(Ok(Error::ReentrantCall)));
+    assert!(!client.is_paused());
+    let stranger = Address::generate(&env);
+    assert_eq!(
+        client.try_enable_waterfall_distribution(&stranger, &id),
+        Err(Ok(Error::Unauthorized))
+    );
+    assert_eq!(
+        client.try_batch_update_allocations(&owner, &id, &vec![&env, 0, 10000]),
+        Err(Ok(Error::InvalidAllocation))
+    );
+}
+
+#[test]
+fn test_legacy_error_wire_codes_are_stable() {
+    // Pin deployed codes independently of the enum/specification definitions.
+    for (error, code) in [
+        (Error::InvalidAssetType, 1),
+        (Error::InvalidTotalAmount, 2),
+        (Error::MissingRequiredField, 3),
+        (Error::TooManyBeneficiaries, 4),
+        (Error::InvalidClaimCode, 5),
+        (Error::AllocationPercentageMismatch, 6),
+        (Error::DescriptionTooLong, 7),
+        (Error::InvalidBeneficiaryData, 8),
+        (Error::Unauthorized, 9),
+        (Error::PlanNotFound, 10),
+        (Error::InvalidBeneficiaryIndex, 11),
+        (Error::ZkProofRequired, 12),
+        (Error::InvalidAllocation, 13),
+        (Error::InvalidClaimCodeRange, 14),
+        (Error::ClaimNotAllowedYet, 15),
+        (Error::AlreadyClaimed, 16),
+        (Error::BeneficiaryNotFound, 17),
+        (Error::PlanAlreadyDeactivated, 18),
+        (Error::PlanNotActive, 19),
+        (Error::AdminNotSet, 20),
+        (Error::AdminAlreadyInitialized, 21),
+        (Error::NotAdmin, 22),
+        (Error::KycNotSubmitted, 23),
+        (Error::PlanNotClaimed, 27),
+        (Error::KycAlreadyRejected, 28),
+        (Error::InsufficientBalance, 29),
+        (Error::FeeTransferFailed, 30),
+        (Error::InsufficientLiquidity, 31),
+        (Error::InheritanceAlreadyTriggered, 32),
+        (Error::EmergencyCooldownActive, 33),
+        (Error::VestingScheduleActive, 34),
+        (Error::NothingToClaim, 35),
+        (Error::EmergencyAccessAlreadyActive, 36),
+        (Error::InvalidGuardianThreshold, 37),
+        (Error::EmergencyContactAlreadyExists, 38),
+        (Error::TooManyEmergencyContacts, 39),
+        (Error::EmergencyContactNotFound, 40),
+        (Error::GuardianNotFound, 41),
+        (Error::AlreadyApproved, 42),
+        (Error::InheritanceNotTriggered, 43),
+        (Error::NoOutstandingLoans, 44),
+        (Error::LoanRecallFailed, 45),
+        (Error::WillHashAlreadyStored, 46),
+        (Error::VaultNotFound, 47),
+        (Error::WillAlreadyLinked, 48),
+        (Error::WillAlreadyFinalized, 49),
+        (Error::WillVersionNotFound, 50),
+        (Error::ReentrantCall, 51),
+        (Error::Blk, 52),
+        (Error::NotWhitelisted, 53),
+    ] {
+        assert_eq!(error as u32, code);
+        assert_eq!(
+            soroban_sdk::Error::from(error),
+            soroban_sdk::Error::from_contract_error(code)
+        );
+    }
 }
